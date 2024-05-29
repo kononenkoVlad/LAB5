@@ -1,6 +1,7 @@
-from tkinter import Tk, Canvas
+from tkinter import Tk, Canvas, Button
 from functions import *
 from random import seed
+from bfs_and_dfs import traversal
 
 window = Tk()
 window.geometry(f'{window_width}x{window_height}')
@@ -16,16 +17,18 @@ print("матриця напрямленого графа:")
 matrix_for_directed_graph = create_matrix_for_directed_graph(count_of_vertexes)
 for row in matrix_for_directed_graph:
     print(row)
-canvas.create_text(300, 20, text="напрямлений граф", font=("Arial", 20))
-vertexes_for_directed_graph = create_vertexes(300, 300, graph_size, count_of_vertexes, canvas)
-draw_edges(matrix_for_directed_graph, vertexes_for_directed_graph, True, canvas)
+canvas.create_text(graph_left, 20, text="напрямлений граф", font=("Arial", 20))
+vertexes = draw_graph(graph_left, graph_top, graph_size, matrix_for_directed_graph, canvas)
 
-print("\nматриця ненапрямленого графа:")
-matrix_for_undirected_graph = create_matrix_for_undirected_graph(matrix_for_directed_graph)
-for row in matrix_for_undirected_graph:
-    print(row)
-canvas.create_text(800, 20, text="ненапрямлений граф", font=("Arial", 20))
-vertexes_for_undirected_graph = create_vertexes(800, 300, graph_size, count_of_vertexes, canvas)
-draw_edges(matrix_for_undirected_graph, vertexes_for_undirected_graph, False, canvas)
+bfs_button = Button(window, text="start BFS", bg=buttonColors, fg="black", font=("Arial", 20),
+                    command=lambda: traversal(matrix_for_directed_graph, vertexes, canvas, bfs_button, dfs_button,
+                                              "bfs"))
+bfs_button.place(x=600, y=200)
+
+dfs_button = Button(window, text="start DFS", bg=buttonColors, fg="black", font=("Arial", 20),
+                    command=lambda: traversal(matrix_for_directed_graph, vertexes, canvas, dfs_button, bfs_button,
+                                              "dfs"))
+dfs_button.place(x=600, y=300)
+
 
 window.mainloop()

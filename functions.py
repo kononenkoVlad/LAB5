@@ -5,9 +5,13 @@ from data import *
 
 
 def create_vertex(left, top, text, canvas):
-    canvas.create_text(left, top, text=text+1, font=("Arial", vertex_size))
-    canvas.create_oval(left - vertex_size, top - vertex_size, left + vertex_size, top + vertex_size,
-                       fill="", outline="red")
+    text = canvas.create_text(left, top, text=text+1, font=("Arial", vertex_size))
+    oval = canvas.create_oval(left - vertex_size, top - vertex_size, left + vertex_size, top + vertex_size, fill="",
+                              outline="red")
+    return {
+        "text": text,
+        "oval": oval
+    }
 
 
 def create_vertexes(left, top, size, count, canvas):
@@ -16,10 +20,13 @@ def create_vertexes(left, top, size, count, canvas):
         angle = i * 2 * pi/count
         vertex_left = left + size * sin(angle)
         vertex_top = top - size * cos(angle)
-        create_vertex(vertex_left, vertex_top, i, canvas)
+        vertex_window_elements = create_vertex(vertex_left, vertex_top, i, canvas)
         vertex = {
             "left": vertex_left,
             "top": vertex_top,
+            "text": vertex_window_elements["text"],
+            "oval": vertex_window_elements["oval"],
+            "number": i
         }
         vertexes[i] = vertex
         i += 1
@@ -45,17 +52,6 @@ def create_zero_matrix(size):
     return matrix
 
 
-def create_matrix_for_undirected_graph(matrix_for_directed_graph):
-    length = len(matrix_for_directed_graph)
-    matrix = create_zero_matrix(length)
-    for i in range(length):
-        for j in range(length):
-            ij = matrix_for_directed_graph[i][j]
-            ji = matrix_for_directed_graph[j][i]
-            matrix[i][j] = ij if ij else ji
-    return matrix
-
-
 def draw_self_arrow(left, top, i, count_of_vertexes_in_this_graph, canvas):
     main_angle = i / count_of_vertexes_in_this_graph * 2 * pi
     lefter_angle = main_angle + extra_angle_in_self_arrow
@@ -71,26 +67,23 @@ def draw_self_arrow(left, top, i, count_of_vertexes_in_this_graph, canvas):
                        top - vertex_size*cos(righter_angle), arrow=LAST)
 
 
-def draw_line(left_i, top_i, left_j, top_j, sin_angle, cos_angle, canvas):
-    left_from = left_i - vertex_size * cos_angle
-    left_to = left_j + vertex_size * cos_angle
-    top_from = top_i + vertex_size * sin_angle
-    top_to = top_j - vertex_size * sin_angle
-    canvas.create_line(left_from, top_from, left_to, top_to)
-
-
-def draw_arrow(left_i, top_i, left_j, top_j, sin_angle, cos_angle, canvas):
+def draw_arrow(left_i, top_i, left_j, top_j, color, width, canvas):
+    dx = left_i - left_j
+    dy = top_i - top_j
+    line_length = sqrt(dx * dx + dy * dy)
+    cos_angle = dx / line_length
+    sin_angle = -dy / line_length
     left_from = left_i - vertex_size * cos_angle + sin_angle * space_between_edges
     left_to = left_j + vertex_size * cos_angle + sin_angle * space_between_edges
     top_from = top_i + vertex_size * sin_angle + cos_angle * space_between_edges
     top_to = top_j - vertex_size * sin_angle + cos_angle * space_between_edges
-    canvas.create_line(left_from, top_from, left_to, top_to, arrow=LAST)
+    canvas.create_line(left_from, top_from, left_to, top_to, arrow=LAST, fill=color, width=width)
 
 
-def draw_edges(matrix, vertexes, directed, canvas):
+def draw_edges(matrix, vertexes, canvas):
     length = len(matrix)
     for i in range(length):
-        for j in range(length if directed else i+1):
+        for j in range(length):
             if not matrix[i][j]:
                 continue
             if i == j:
@@ -102,10 +95,19 @@ def draw_edges(matrix, vertexes, directed, canvas):
             left_j = vertexes[j]["left"]
             top_i = vertexes[i]["top"]
             top_j = vertexes[j]["top"]
-            dx = left_i - left_j
-            dy = top_i - top_j
-            line_length = sqrt(dx * dx + dy * dy)
-            cos_angle = dx/line_length
-            sin_angle = -dy/line_length
-            draw_arrow(left_i, top_i, left_j, top_j, sin_angle, cos_angle, canvas) if directed else (
-                draw_line(left_i, top_i, left_j, top_j, sin_angle, cos_angle, canvas))
+            draw_arrow(left_i, top_i, left_j, top_j, "black", 1, canvas)
+
+
+def draw_graph(left, top, size, matrix, canvas):
+    length = len(matrix)
+    vertexes = create_vertexes(left, top, size, length, canvas)
+    draw_edges(matrix, vertexes, canvas)
+    return vertexes
+
+
+def paint_opened_vertex(canvas, vertexes, vertex, from_vertex):
+    canvas.itemconfig(vertexes[vertex]["oval"], fill="blue")
+    canvas.tag_raise(vertexes[vertex]["text"])
+    if type(from_vertex) is int:
+        draw_arrow(vertexes[from_vertex]["left"], vertexes[from_vertex]["top"], vertexes[vertex]["left"],
+                   vertexes[vertex]["top"], "red", 3, canvas)
